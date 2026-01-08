@@ -1,0 +1,476 @@
+import React, { useState } from 'react';
+import { ArrowRight, CheckCircle, XCircle, Trophy, Zap, Clock, DollarSign, Users } from 'lucide-react';
+
+const SDLCGame = () => {
+  const [gameStarted, setGameStarted] = useState(false);
+  const [methodology, setMethodology] = useState(null);
+  const [currentPhase, setCurrentPhase] = useState(0);
+  const [score, setScore] = useState(0);
+  const [budget, setBudget] = useState(1000);
+  const [time, setTime] = useState(100);
+  const [gameOver, setGameOver] = useState(false);
+  const [currentChallenge, setCurrentChallenge] = useState(null);
+  const [showResult, setShowResult] = useState(false);
+  const [completedPhases, setCompletedPhases] = useState([]);
+
+  const phases = [
+    { 
+      name: 'التخطيط', 
+      color: 'bg-blue-500',
+      icon: '📋',
+      description: 'تحديد نطاق المشروع والأهداف'
+    },
+    { 
+      name: 'التحليل', 
+      color: 'bg-green-500',
+      icon: '🔍',
+      description: 'جمع وتحليل المتطلبات'
+    },
+    { 
+      name: 'التصميم', 
+      color: 'bg-orange-500',
+      icon: '🎨',
+      description: 'تصميم بنية النظام والواجهات'
+    },
+    { 
+      name: 'التطوير', 
+      color: 'bg-red-500',
+      icon: '💻',
+      description: 'كتابة الأكواد البرمجية'
+    },
+    { 
+      name: 'الاختبار', 
+      color: 'bg-yellow-500',
+      icon: '🧪',
+      description: 'فحص الأخطاء والتأكد من الجودة'
+    },
+    { 
+      name: 'التنفيذ', 
+      color: 'bg-purple-500',
+      icon: '🚀',
+      description: 'نشر النظام للمستخدمين'
+    },
+    { 
+      name: 'الصيانة', 
+      color: 'bg-gray-500',
+      icon: '🔧',
+      description: 'الدعم والتحديثات المستمرة'
+    }
+  ];
+
+  const challenges = {
+    0: [ // التخطيط
+      {
+        question: 'العميل غير متأكد من متطلباته الكاملة، ما الحل الأفضل؟',
+        options: [
+          { text: 'البدء فوراً والتعديل لاحقاً', points: 10, budget: -50, time: -10, correct: false },
+          { text: 'عقد اجتماعات تفصيلية مع العميل', points: 30, budget: -20, time: -5, correct: true },
+          { text: 'تجاهل الأمر والاعتماد على خبرتك', points: 0, budget: -100, time: -20, correct: false }
+        ]
+      },
+      {
+        question: 'ما هي الوثيقة الأهم في مرحلة التخطيط؟',
+        options: [
+          { text: 'وثيقة نطاق المشروع', points: 30, budget: -10, time: -5, correct: true },
+          { text: 'الأكواد البرمجية', points: 0, budget: -50, time: -10, correct: false },
+          { text: 'دليل المستخدم', points: 10, budget: -20, time: -5, correct: false }
+        ]
+      }
+    ],
+    1: [ // التحليل
+      {
+        question: 'اكتشفت متطلبات متناقضة من العميل، كيف تتصرف؟',
+        options: [
+          { text: 'تجاهل التناقض والاستمرار', points: 0, budget: -80, time: -15, correct: false },
+          { text: 'توضيح التناقض للعميل والحصول على قرار', points: 30, budget: -15, time: -3, correct: true },
+          { text: 'اختيار ما تراه مناسباً بنفسك', points: 15, budget: -40, time: -8, correct: false }
+        ]
+      },
+      {
+        question: 'كم عدد أنواع المتطلبات الرئيسية؟',
+        options: [
+          { text: 'نوع واحد فقط', points: 0, budget: -30, time: -5, correct: false },
+          { text: 'نوعان: وظيفية وغير وظيفية', points: 30, budget: -10, time: -3, correct: true },
+          { text: 'خمسة أنواع', points: 10, budget: -20, time: -5, correct: false }
+        ]
+      }
+    ],
+    2: [ // التصميم
+      {
+        question: 'أيهما أفضل في تصميم واجهة المستخدم؟',
+        options: [
+          { text: 'تصميم معقد وجميل جداً', points: 15, budget: -60, time: -12, correct: false },
+          { text: 'تصميم بسيط وسهل الاستخدام', points: 30, budget: -25, time: -5, correct: true },
+          { text: 'نسخ تصميم تطبيق مشهور', points: 0, budget: -40, time: -8, correct: false }
+        ]
+      },
+      {
+        question: 'ما هو UML؟',
+        options: [
+          { text: 'لغة برمجة جديدة', points: 0, budget: -20, time: -5, correct: false },
+          { text: 'لغة نمذجة موحدة للتصميم', points: 30, budget: -10, time: -3, correct: true },
+          { text: 'نوع من قواعد البيانات', points: 5, budget: -15, time: -4, correct: false }
+        ]
+      }
+    ],
+    3: [ // التطوير
+      {
+        question: 'ظهرت مشكلة برمجية معقدة، ما الحل؟',
+        options: [
+          { text: 'تجاهلها والاستمرار', points: 0, budget: -100, time: -20, correct: false },
+          { text: 'البحث عن حل وطلب المساعدة إن لزم', points: 30, budget: -20, time: -5, correct: true },
+          { text: 'إعادة كتابة النظام كاملاً', points: 5, budget: -200, time: -30, correct: false }
+        ]
+      },
+      {
+        question: 'ما أهمية التعليقات في الكود البرمجي؟',
+        options: [
+          { text: 'غير مهمة إطلاقاً', points: 0, budget: -50, time: -10, correct: false },
+          { text: 'مهمة لفهم الكود لاحقاً', points: 30, budget: -10, time: -3, correct: true },
+          { text: 'تبطئ البرنامج', points: 5, budget: -30, time: -8, correct: false }
+        ]
+      }
+    ],
+    4: [ // الاختبار
+      {
+        question: 'اكتشفت خطأ كبير قبل التسليم، ماذا تفعل؟',
+        options: [
+          { text: 'إخفاؤه والأمل ألا يكتشفه أحد', points: 0, budget: -150, time: -25, correct: false },
+          { text: 'إصلاحه فوراً وإعادة الاختبار', points: 30, budget: -40, time: -10, correct: true },
+          { text: 'تسليم النظام كما هو', points: 0, budget: -200, time: -30, correct: false }
+        ]
+      },
+      {
+        question: 'ما هو أفضل وقت لبدء الاختبار؟',
+        options: [
+          { text: 'بعد انتهاء كل شيء', points: 10, budget: -60, time: -15, correct: false },
+          { text: 'منذ البداية ومع كل مرحلة', points: 30, budget: -20, time: -5, correct: true },
+          { text: 'فقط قبل التسليم', points: 5, budget: -80, time: -20, correct: false }
+        ]
+      }
+    ],
+    5: [ // التنفيذ
+      {
+        question: 'المستخدمون يرفضون النظام الجديد، ما السبب المحتمل؟',
+        options: [
+          { text: 'المستخدمون لا يفهمون شيئاً', points: 0, budget: -100, time: -20, correct: false },
+          { text: 'عدم تدريبهم بشكل كافٍ', points: 30, budget: -30, time: -8, correct: true },
+          { text: 'النظام معقد جداً', points: 20, budget: -50, time: -12, correct: false }
+        ]
+      },
+      {
+        question: 'ما أهمية خطة التحول للنظام الجديد؟',
+        options: [
+          { text: 'غير مهمة، الانتقال مباشرة', points: 0, budget: -120, time: -25, correct: false },
+          { text: 'مهمة جداً لتقليل المخاطر', points: 30, budget: -25, time: -5, correct: true },
+          { text: 'مهمة فقط للشركات الكبيرة', points: 15, budget: -60, time: -15, correct: false }
+        ]
+      }
+    ],
+    6: [ // الصيانة
+      {
+        question: 'طلب العميل تحديثاً جديداً، كيف تقيّم الأولوية؟',
+        options: [
+          { text: 'تنفيذ كل الطلبات فوراً', points: 10, budget: -80, time: -20, correct: false },
+          { text: 'تقييم الأهمية والتأثير أولاً', points: 30, budget: -20, time: -5, correct: true },
+          { text: 'رفض كل التحديثات', points: 0, budget: -50, time: -10, correct: false }
+        ]
+      },
+      {
+        question: 'ما أهمية توثيق التغييرات في الصيانة؟',
+        options: [
+          { text: 'غير مهم طالما يعمل النظام', points: 0, budget: -70, time: -15, correct: false },
+          { text: 'مهم جداً لتتبع التطورات', points: 30, budget: -15, time: -3, correct: true },
+          { text: 'مهم فقط للمشاريع الكبيرة', points: 15, budget: -40, time: -10, correct: false }
+        ]
+      }
+    ]
+  };
+
+  const startGame = (method) => {
+    setMethodology(method);
+    setGameStarted(true);
+    setCurrentPhase(0);
+    setScore(0);
+    setBudget(1000);
+    setTime(100);
+    setGameOver(false);
+    setCompletedPhases([]);
+    loadChallenge(0);
+  };
+
+  const loadChallenge = (phaseIndex) => {
+    const phaseChallenges = challenges[phaseIndex];
+    const randomChallenge = phaseChallenges[Math.floor(Math.random() * phaseChallenges.length)];
+    setCurrentChallenge(randomChallenge);
+    setShowResult(false);
+  };
+
+  const handleAnswer = (option) => {
+    const newScore = score + option.points;
+    const newBudget = budget + option.budget;
+    const newTime = time + option.time;
+
+    setScore(newScore);
+    setBudget(newBudget);
+    setTime(newTime);
+    setShowResult({ correct: option.correct, option });
+
+    if (newBudget <= 0 || newTime <= 0) {
+      setTimeout(() => {
+        setGameOver(true);
+      }, 2000);
+      return;
+    }
+
+    setTimeout(() => {
+      if (option.correct) {
+        const newCompleted = [...completedPhases, currentPhase];
+        setCompletedPhases(newCompleted);
+        
+        if (currentPhase < phases.length - 1) {
+          const nextPhase = currentPhase + 1;
+          setCurrentPhase(nextPhase);
+          loadChallenge(nextPhase);
+        } else {
+          setGameOver(true);
+        }
+      } else {
+        loadChallenge(currentPhase);
+      }
+    }, 2000);
+  };
+
+  const restartGame = () => {
+    setGameStarted(false);
+    setMethodology(null);
+    setCurrentPhase(0);
+    setScore(0);
+    setBudget(1000);
+    setTime(100);
+    setGameOver(false);
+    setCurrentChallenge(null);
+    setShowResult(false);
+    setCompletedPhases([]);
+  };
+
+  if (!gameStarted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8" dir="rtl">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-2xl shadow-2xl p-8">
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-bold text-indigo-900 mb-2">🎮 لعبة مهندسو النظام</h1>
+              <p className="text-gray-600 text-lg">تعلم دورة حياة تطوير الأنظمة بطريقة تفاعلية</p>
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <p className="text-sm text-indigo-700 font-semibold">من تصميم: ريمال محمد حجاب الحربي</p>
+                <p className="text-xs text-gray-500 mt-1">© جميع الحقوق محفوظة - السنة الدراسية ٢٠٢٥</p>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white cursor-pointer hover:scale-105 transition-transform" onClick={() => startGame('waterfall')}>
+                <h3 className="text-2xl font-bold mb-3">🌊 Waterfall</h3>
+                <p className="text-blue-100 mb-4">المنهجية التقليدية المتسلسلة</p>
+                <ul className="space-y-2 text-sm">
+                  <li>✓ كل مرحلة تكتمل قبل التالية</li>
+                  <li>✓ مناسب للمشاريع الواضحة</li>
+                  <li>✓ صعب التغيير بعد البدء</li>
+                </ul>
+              </div>
+
+              <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white cursor-pointer hover:scale-105 transition-transform" onClick={() => startGame('agile')}>
+                <h3 className="text-2xl font-bold mb-3">⚡ Agile</h3>
+                <p className="text-green-100 mb-4">المنهجية الرشيقة المرنة</p>
+                <ul className="space-y-2 text-sm">
+                  <li>✓ تطوير تدريجي بدفعات صغيرة</li>
+                  <li>✓ مرونة عالية في التغيير</li>
+                  <li>✓ تسليم مستمر للميزات</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="bg-indigo-50 rounded-xl p-6">
+              <h3 className="text-xl font-bold text-indigo-900 mb-3">📖 كيفية اللعب:</h3>
+              <ol className="space-y-2 text-gray-700">
+                <li><strong>1.</strong> اختر منهجية التطوير (Waterfall أو Agile)</li>
+                <li><strong>2.</strong> أجب على التحديات في كل مرحلة</li>
+                <li><strong>3.</strong> احذر من نفاد الميزانية أو الوقت!</li>
+                <li><strong>4.</strong> أكمل جميع المراحل السبعة للفوز</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (gameOver) {
+    const won = completedPhases.length === phases.length;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8 flex items-center justify-center" dir="rtl">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full text-center">
+          {won ? (
+            <>
+              <Trophy className="w-24 h-24 text-yellow-500 mx-auto mb-4" />
+              <h2 className="text-4xl font-bold text-green-600 mb-4">🎉 مبروك! فزت!</h2>
+              <p className="text-xl text-gray-700 mb-6">أكملت جميع مراحل دورة حياة النظام بنجاح!</p>
+            </>
+          ) : (
+            <>
+              <XCircle className="w-24 h-24 text-red-500 mx-auto mb-4" />
+              <h2 className="text-4xl font-bold text-red-600 mb-4">😔 انتهت اللعبة!</h2>
+              <p className="text-xl text-gray-700 mb-6">
+                {budget <= 0 ? 'نفدت الميزانية!' : 'نفد الوقت!'}
+              </p>
+            </>
+          )}
+          
+          <div className="grid grid-cols-3 gap-4 mb-8">
+            <div className="bg-indigo-50 rounded-lg p-4">
+              <Trophy className="w-8 h-8 text-indigo-600 mx-auto mb-2" />
+              <p className="text-2xl font-bold text-indigo-900">{score}</p>
+              <p className="text-sm text-gray-600">النقاط</p>
+            </div>
+            <div className="bg-green-50 rounded-lg p-4">
+              <DollarSign className="w-8 h-8 text-green-600 mx-auto mb-2" />
+              <p className="text-2xl font-bold text-green-900">{budget}</p>
+              <p className="text-sm text-gray-600">الميزانية</p>
+            </div>
+            <div className="bg-blue-50 rounded-lg p-4">
+              <Clock className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+              <p className="text-2xl font-bold text-blue-900">{time}</p>
+              <p className="text-sm text-gray-600">الوقت</p>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <p className="text-lg font-semibold text-gray-700 mb-2">المراحل المكتملة:</p>
+            <p className="text-3xl font-bold text-indigo-600">{completedPhases.length} / {phases.length}</p>
+          </div>
+
+          <button
+            onClick={restartGame}
+            className="bg-indigo-600 text-white px-8 py-3 rounded-lg font-bold text-lg hover:bg-indigo-700 transition-colors"
+          >
+            العب مرة أخرى 🔄
+          </button>
+
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <p className="text-sm text-gray-600">من تصميم: <span className="font-semibold text-indigo-700">ريمال محمد حجاب الحربي</span></p>
+            <p className="text-xs text-gray-500 mt-1">© جميع الحقوق محفوظة - السنة الدراسية ٢٠٢٥</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8" dir="rtl">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-xl shadow-lg p-4 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-indigo-900">
+              {methodology === 'agile' ? '⚡ Agile' : '🌊 Waterfall'}
+            </h2>
+            <div className="flex gap-4">
+              <div className="flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-lg">
+                <Trophy className="w-5 h-5 text-indigo-600" />
+                <span className="font-bold text-indigo-900">{score}</span>
+              </div>
+              <div className="flex items-center gap-2 bg-green-50 px-4 py-2 rounded-lg">
+                <DollarSign className="w-5 h-5 text-green-600" />
+                <span className="font-bold text-green-900">{budget}</span>
+              </div>
+              <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-lg">
+                <Clock className="w-5 h-5 text-blue-600" />
+                <span className="font-bold text-blue-900">{time}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="flex gap-2">
+            {phases.map((phase, index) => (
+              <div key={index} className="flex-1">
+                <div className={`h-3 rounded-full transition-all ${
+                  completedPhases.includes(index) ? phase.color : 
+                  index === currentPhase ? `${phase.color} opacity-70` : 
+                  'bg-gray-200'
+                }`} />
+                <p className="text-xs text-center mt-1 font-semibold">{phase.icon}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Current Phase */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className={`${phases[currentPhase].color} w-16 h-16 rounded-full flex items-center justify-center text-3xl`}>
+              {phases[currentPhase].icon}
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900">{phases[currentPhase].name}</h3>
+              <p className="text-gray-600">{phases[currentPhase].description}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Challenge */}
+        {currentChallenge && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h4 className="text-xl font-bold text-gray-900 mb-6">{currentChallenge.question}</h4>
+            
+            <div className="space-y-4">
+              {currentChallenge.options.map((option, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleAnswer(option)}
+                  disabled={showResult}
+                  className={`w-full p-4 rounded-lg text-right font-semibold transition-all ${
+                    showResult && option.correct
+                      ? 'bg-green-100 border-2 border-green-500'
+                      : showResult && showResult.option === option && !option.correct
+                      ? 'bg-red-100 border-2 border-red-500'
+                      : 'bg-gray-50 hover:bg-indigo-50 border-2 border-transparent hover:border-indigo-300'
+                  } ${showResult ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span>{option.text}</span>
+                    {showResult && option.correct && <CheckCircle className="w-6 h-6 text-green-600" />}
+                    {showResult && showResult.option === option && !option.correct && <XCircle className="w-6 h-6 text-red-600" />}
+                  </div>
+                  {showResult && (
+                    <div className="mt-2 text-sm flex gap-4">
+                      <span className={option.points > 0 ? 'text-green-600' : 'text-gray-500'}>
+                        نقاط: {option.points > 0 ? '+' : ''}{option.points}
+                      </span>
+                      <span className="text-gray-600">
+                        ميزانية: {option.budget}
+                      </span>
+                      <span className="text-gray-600">
+                        وقت: {option.time}
+                      </span>
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {showResult && (
+              <div className={`mt-6 p-4 rounded-lg ${showResult.correct ? 'bg-green-50' : 'bg-red-50'}`}>
+                <p className={`font-bold ${showResult.correct ? 'text-green-800' : 'text-red-800'}`}>
+                  {showResult.correct ? '✅ إجابة صحيحة! ممتاز!' : '❌ إجابة خاطئة! حاول مرة أخرى'}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default SDLCGame;
